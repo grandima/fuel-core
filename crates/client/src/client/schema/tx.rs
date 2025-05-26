@@ -172,7 +172,6 @@ impl TryFrom<ProgramState> for fuel_vm::ProgramState {
     fn try_from(state: ProgramState) -> Result<Self, Self::Error> {
         Ok(match state.return_type {
             ReturnType::Return => fuel_vm::ProgramState::Return({
-                let b = state.data.0.0;
                 let b = state.data.0.deref();
                 let b: [u8; 8] =
                     b.try_into().map_err(|_| ConversionError::BytesLength)?;
@@ -182,7 +181,6 @@ impl TryFrom<ProgramState> for fuel_vm::ProgramState {
                 Bytes32::try_from(state.data.0.0.deref())?
             }),
             ReturnType::Revert => fuel_vm::ProgramState::Revert({
-                let b = state.data.0.0;
                 let b = state.data.0.deref();
                 let b: [u8; 8] =
                     b.try_into().map_err(|_| ConversionError::BytesLength)?;

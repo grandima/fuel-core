@@ -194,7 +194,6 @@ impl From<Vec<u8>> for HexString {
     }
 }
 
-impl <'a> Deref for HexString {
 impl Deref for HexString {
     type Target = Bytes;
 
