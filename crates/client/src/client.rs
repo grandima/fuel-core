@@ -154,6 +154,7 @@ use std::{
         Mutex,
     },
 };
+use std::borrow::Cow;
 use tai64::Tai64;
 use tracing as _;
 use types::{
@@ -684,7 +685,7 @@ impl FuelClient {
         root: Bytes32,
     ) -> io::Result<Option<StateTransitionBytecode>> {
         let args = schema::upgrades::StateTransitionBytecodeByRootArgs {
-            root: HexString(Bytes(root.to_vec())),
+            root: HexString(Bytes (Cow::Owned(root.to_vec()))),
         };
         let query = schema::upgrades::StateTransitionBytecodeByRootQuery::build(args);
 
@@ -717,7 +718,7 @@ impl FuelClient {
     ) -> io::Result<Vec<TransactionExecutionStatus>> {
         let txs = txs
             .iter()
-            .map(|tx| HexString(Bytes(tx.to_bytes())))
+            .map(|tx| HexString(Bytes{values: Cow::Owned(tx.to_bytes())}))
             .collect::<Vec<HexString>>();
         let query: Operation<schema::tx::DryRun, DryRunArg> =
             schema::tx::DryRun::build(DryRunArg {
@@ -744,7 +745,7 @@ impl FuelClient {
     ) -> io::Result<(Vec<TransactionExecutionStatus>, Vec<StorageReadReplayEvent>)> {
         let txs = txs
             .iter()
-            .map(|tx| HexString(Bytes(tx.to_bytes())))
+            .map(|tx| HexString(Bytes{values: Cow::Owned(tx.to_bytes())}))
             .collect::<Vec<HexString>>();
         let query: Operation<schema::tx::DryRunRecordStorageReads, DryRunArg> =
             schema::tx::DryRunRecordStorageReads::build(DryRunArg {
@@ -821,7 +822,7 @@ impl FuelClient {
         estimate_predicates: bool,
         reserve_gas: Option<u64>,
     ) -> io::Result<AssembleTransactionResult> {
-        let tx = HexString(Bytes(tx.to_bytes()));
+        let tx = HexString(Bytes{values: Cow::Owned(tx.to_bytes())});
         let block_horizon = block_horizon.into();
 
         let required_balances: Vec<_> = required_balances
@@ -854,7 +855,7 @@ impl FuelClient {
     pub async fn estimate_predicates(&self, tx: &mut Transaction) -> io::Result<()> {
         let serialized_tx = tx.to_bytes();
         let query = schema::tx::EstimatePredicates::build(TxArg {
-            tx: HexString(Bytes(serialized_tx)),
+            tx: HexString(Bytes{values: Cow::Owned(serialized_tx)}),
         });
         let tx_with_predicate = self.query(query).await.map(|r| r.estimate_predicates)?;
         let tx_with_predicate: Transaction = tx_with_predicate.try_into()?;
@@ -876,7 +877,7 @@ impl FuelClient {
     ) -> io::Result<types::primitives::TransactionId> {
         let tx = tx.clone().to_bytes();
         let query = schema::tx::Submit::build(TxWithEstimatedPredicatesArg {
-            tx: HexString(Bytes(tx)),
+            tx: HexString(Bytes{values: Cow::Owned(tx)}),
             estimate_predicates,
         });
 
@@ -911,7 +912,7 @@ impl FuelClient {
         let tx = tx.clone().to_bytes();
         let s =
             schema::tx::SubmitAndAwaitSubscription::build(TxWithEstimatedPredicatesArg {
-                tx: HexString(Bytes(tx)),
+                tx: HexString(Bytes{values: Cow::Owned(tx)}),
                 estimate_predicates,
             });
 
@@ -950,7 +951,7 @@ impl FuelClient {
         let tx = tx.clone().to_bytes();
         let s = schema::tx::SubmitAndAwaitSubscriptionWithTransaction::build(
             TxWithEstimatedPredicatesArg {
-                tx: HexString(Bytes(tx)),
+                tx: HexString(Bytes{values: Cow::Owned(tx)}),
                 estimate_predicates,
             },
         );
@@ -992,7 +993,7 @@ impl FuelClient {
         let tx = tx.clone().to_bytes();
         let s = schema::tx::SubmitAndAwaitStatusSubscription::build(
             SubmitAndAwaitStatusArg {
-                tx: HexString(Bytes(tx)),
+                tx: HexString(Bytes{values: Cow::Owned(tx)}),
                 estimate_predicates,
                 include_preconfirmation,
             },

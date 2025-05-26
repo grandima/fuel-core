@@ -147,6 +147,9 @@ pub struct Config<State = Initialized> {
     /// the `init` method.
     pub state: State,
 
+    /// If true, the node will subscribe to new transaction topic
+    pub subscribe_to_new_tx: bool,
+
     /// If true, the node will subscribe to pre-confirmations topic
     pub subscribe_to_pre_confirmations: bool,
 }
@@ -198,6 +201,7 @@ impl Config<NotInitialized> {
             database_read_threads: self.database_read_threads,
             tx_pool_threads: self.tx_pool_threads,
             state: Initialized(()),
+            subscribe_to_new_tx: self.subscribe_to_new_tx,
             subscribe_to_pre_confirmations: self.subscribe_to_pre_confirmations,
         })
     }
@@ -253,6 +257,7 @@ impl Config<NotInitialized> {
             database_read_threads: 0,
             tx_pool_threads: 0,
             state: NotInitialized,
+            subscribe_to_new_tx: true,
             subscribe_to_pre_confirmations: true,
         }
     }

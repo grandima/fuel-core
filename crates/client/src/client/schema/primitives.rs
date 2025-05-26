@@ -26,6 +26,7 @@ use std::{
     ops::Deref,
     str::FromStr,
 };
+use std::borrow::Cow;
 use tai64::Tai64;
 
 #[derive(Debug, Clone, Default)]
@@ -183,17 +184,17 @@ pub struct HexString(pub Bytes);
 
 impl From<HexString> for Vec<u8> {
     fn from(s: HexString) -> Self {
-        s.0.0
+        s.0.0.into_owned()
     }
 }
 
 impl From<Vec<u8>> for HexString {
     fn from(s: Vec<u8>) -> Self {
-        HexString(Bytes(s))
+        HexString(Bytes (Cow::Owned(s)))
     }
 }
 
-impl Deref for HexString {
+impl <'a> Deref for HexString {
     type Target = Bytes;
 
     fn deref(&self) -> &Self::Target {
@@ -202,7 +203,7 @@ impl Deref for HexString {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Bytes(pub Vec<u8>);
+pub struct Bytes (pub Cow<'static, [u8]>) where [u8]: ToOwned<Owned = Vec<u8>>;
 
 impl FromStr for Bytes {
     type Err = ConversionError;
@@ -211,7 +212,8 @@ impl FromStr for Bytes {
         // trim leading 0x
         let value = s.strip_prefix("0x").ok_or(HexStringPrefixError)?;
         // decode value into bytes
-        Ok(Bytes(hex::decode(value)?))
+        let x = Cow::Owned(hex::decode(value)?);
+        Ok(Bytes(x))
     }
 }
 

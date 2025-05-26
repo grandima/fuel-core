@@ -419,7 +419,7 @@ impl TryFrom<OpaqueTransactionWithStatus> for TransactionResponse {
 
     fn try_from(value: OpaqueTransactionWithStatus) -> Result<Self, Self::Error> {
         let bytes = value.raw_payload.0.0;
-        let tx: TransactionType = Transaction::from_bytes(bytes.as_slice())
+        let tx: TransactionType = Transaction::from_bytes(&bytes)
             .map(Into::into)
             .unwrap_or(TransactionType::Unknown);
         let status = value

@@ -212,7 +212,11 @@ impl TryFrom<Transaction> for fuel_tx::Transaction {
                         ConversionError::MissingField("witnesses".to_string())
                     })?
                     .into_iter()
-                    .map(|w| w.0.0.into())
+                    .map(|w| {
+                        let a = w.0;
+                        return a.0.into();
+                    }
+                    )
                     .collect(),
             );
             *script.receipts_root_mut() = tx
