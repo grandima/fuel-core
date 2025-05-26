@@ -195,6 +195,7 @@ impl From<Vec<u8>> for HexString {
 }
 
 impl <'a> Deref for HexString {
+impl Deref for HexString {
     type Target = Bytes;
 
     fn deref(&self) -> &Self::Target {
@@ -364,3 +365,4 @@ impl Signature {
         fuel_core_types::fuel_crypto::Signature::from_bytes(*bytes)
     }
 }
+
