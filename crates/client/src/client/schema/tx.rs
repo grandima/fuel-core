@@ -41,6 +41,7 @@ use std::convert::{
     TryFrom,
     TryInto,
 };
+use std::ops::Deref;
 
 pub mod transparent_receipt;
 pub mod transparent_tx;
@@ -138,8 +139,8 @@ impl TryFrom<OpaqueTransaction> for fuel_tx::Transaction {
     type Error = ConversionError;
 
     fn try_from(value: OpaqueTransaction) -> Result<Self, Self::Error> {
-        let bytes = value.raw_payload.0.0;
-        fuel_tx::Transaction::from_bytes(bytes.as_slice())
+        let bytes = value.raw_payload.0.deref();
+        fuel_tx::Transaction::from_bytes(bytes)
             .map_err(ConversionError::TransactionFromBytesError)
     }
 }
@@ -171,16 +172,16 @@ impl TryFrom<ProgramState> for fuel_vm::ProgramState {
     fn try_from(state: ProgramState) -> Result<Self, Self::Error> {
         Ok(match state.return_type {
             ReturnType::Return => fuel_vm::ProgramState::Return({
-                let b = state.data.0.0;
+                let b = state.data.0.deref();
                 let b: [u8; 8] =
                     b.try_into().map_err(|_| ConversionError::BytesLength)?;
                 u64::from_be_bytes(b)
             }),
             ReturnType::ReturnData => fuel_vm::ProgramState::ReturnData({
-                Bytes32::try_from(state.data.0.0.as_slice())?
+                Bytes32::try_from(state.data.0.0.deref())?
             }),
             ReturnType::Revert => fuel_vm::ProgramState::Revert({
-                let b = state.data.0.0;
+                let b = state.data.0.deref();
                 let b: [u8; 8] =
                     b.try_into().map_err(|_| ConversionError::BytesLength)?;
                 u64::from_be_bytes(b)
@@ -692,6 +693,7 @@ pub struct AllReceipts {
 
 #[cfg(test)]
 pub mod tests {
+    use std::borrow::Cow;
     use super::*;
     use crate::client::schema::Bytes;
     use fuel_core_types::fuel_types::canonical::Serialize;
@@ -751,7 +753,7 @@ pub mod tests {
         use cynic::MutationBuilder;
         let tx = fuel_tx::Transaction::default_test_tx();
         let query = DryRun::build(DryRunArg {
-            txs: vec![HexString(Bytes(tx.to_bytes()))],
+            txs: vec![HexString(Bytes(Cow::Owned(tx.to_bytes())))],
             utxo_validation: Some(true),
             gas_price: Some(123u64.into()),
             block_height: Some(456u32.into()),
@@ -764,7 +766,7 @@ pub mod tests {
         use cynic::MutationBuilder;
         let tx = fuel_tx::Transaction::default_test_tx();
         let query = Submit::build(TxWithEstimatedPredicatesArg {
-            tx: HexString(Bytes(tx.to_bytes())),
+            tx: HexString(Bytes(Cow::Owned(tx.to_bytes()))),
             estimate_predicates: Some(true),
         });
         insta::assert_snapshot!(query.query)

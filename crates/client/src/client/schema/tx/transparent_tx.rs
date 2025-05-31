@@ -26,6 +26,7 @@ use core::convert::{
     TryFrom,
     TryInto,
 };
+use std::ops::Deref;
 use fuel_core_types::{
     fuel_tx::{
         self,
@@ -212,7 +213,7 @@ impl TryFrom<Transaction> for fuel_tx::Transaction {
                         ConversionError::MissingField("witnesses".to_string())
                     })?
                     .into_iter()
-                    .map(|w| w.0.0.into())
+                    .map(|w| w.0.deref().into())
                     .collect(),
             );
             *script.receipts_root_mut() = tx
@@ -271,7 +272,7 @@ impl TryFrom<Transaction> for fuel_tx::Transaction {
                         ConversionError::MissingField("witnesses".to_string())
                     })?
                     .into_iter()
-                    .map(|w| w.0.0.into())
+                    .map(|w| w.0.deref().into())
                     .collect(),
             );
             create.into()
@@ -333,7 +334,7 @@ impl TryFrom<Transaction> for fuel_tx::Transaction {
                         ConversionError::MissingField("witnesses".to_string())
                     })?
                     .into_iter()
-                    .map(|w| w.0.0.into())
+                    .map(|w| w.0.deref().into())
                     .collect(),
             );
             tx.into()
@@ -392,7 +393,7 @@ impl TryFrom<Transaction> for fuel_tx::Transaction {
                         ConversionError::MissingField("witnesses".to_string())
                     })?
                     .into_iter()
-                    .map(|w| w.0.0.into())
+                    .map(|w| w.0.deref().into())
                     .collect(),
             );
             tx.into()
@@ -429,7 +430,7 @@ impl TryFrom<Transaction> for fuel_tx::Transaction {
                         ConversionError::MissingField("witnesses".to_string())
                     })?
                     .into_iter()
-                    .map(|w| w.0.0.into())
+                    .map(|w| w.0.deref().into())
                     .collect(),
             );
             tx.into()
