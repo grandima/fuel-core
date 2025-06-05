@@ -24,6 +24,7 @@ pub use tx_status_stream::{
     TxStatusStream,
 };
 pub use utils::from_executor_to_status;
+use futures as _;
 
 #[cfg(test)]
 mod tests;

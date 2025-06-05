@@ -1,7 +1,8 @@
-use fuel_core_services::stream::BoxStream;
+// use fuel_core_services::stream::BoxStream;
 
-use crate::ports::P2PPreConfirmationGossipData;
+use std::pin::Pin;
+use crate::ports::{AsyncReturner, P2PPreConfirmationGossipData};
 
 pub(super) struct Subscriptions {
-    pub new_tx_status: BoxStream<P2PPreConfirmationGossipData>,
+    pub new_tx_status: Pin<Box<dyn AsyncReturner<Item = P2PPreConfirmationGossipData> + Send + Sync + 'static>>,
 }

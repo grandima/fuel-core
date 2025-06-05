@@ -51,7 +51,7 @@ use fuel_core_types::{
     },
     tai64::Tai64,
 };
-use futures::StreamExt;
+// use futures::StreamExt;
 use std::collections::HashMap;
 use tokio::sync::{
     broadcast,
@@ -426,7 +426,7 @@ where
     let (tx_status_sender, tx_status_receiver) =
         broadcast::channel(config.max_tx_update_subscriptions);
     let subscriptions = Subscriptions {
-        new_tx_status: tx_status_from_p2p_stream,
+        new_tx_status: Box::pin(tx_status_from_p2p_stream),
     };
 
     let tx_update_sender =
@@ -463,7 +463,9 @@ where
 #[cfg(test)]
 #[allow(non_snake_case)]
 mod tests {
-    use std::{
+    use async_trait::async_trait;
+use std::pin::Pin;
+use std::{
         collections::HashSet,
         time::Duration,
     };
@@ -504,10 +506,7 @@ mod tests {
         },
         tai64::Tai64,
     };
-    use futures::{
-        StreamExt,
-        stream::BoxStream,
-    };
+    use futures::{StreamExt, stream::BoxStream, Stream};
     use status::transaction::{
         random_prunable_tx_status,
         random_tx_status,
@@ -561,14 +560,23 @@ mod tests {
         p2p_notify_validity_sender:
             mpsc::Sender<(GossipsubMessageInfo, GossipsubMessageAcceptance)>,
     }
+    struct MyStreamer<T> {
+        pub stream: Pin<Box<dyn Stream<Item = T> + Send + 'static>>
+    }
+    #[async_trait]
+    impl <T>AsyncReturner<T> for MyStreamer<T> {
+        async fn next(&mut self) -> Option<T> {
+            self.stream.next().await
+        }
+    }
 
     impl P2PSubscriptions for MockP2P {
         type GossipedStatuses = P2PPreConfirmationGossipData;
 
         fn gossiped_tx_statuses(
             &self,
-        ) -> fuel_core_services::stream::BoxStream<Self::GossipedStatuses> {
-            Box::pin(tokio_stream::empty())
+        ) -> impl  AsyncReturner<Self::GossipedStatuses> + 'static {
+            MyStreamer {stream: Box::pin(tokio_stream::empty())}
         }
 
         fn notify_gossip_transaction_validity(
@@ -1213,6 +1221,7 @@ mod tests {
 
     use proptest::prelude::*;
     use std::collections::HashMap;
+    use crate::ports::AsyncReturner;
 
     const TX_ID_POOL_SIZE: usize = 20;
     const MIN_ACTIONS: usize = 50;
