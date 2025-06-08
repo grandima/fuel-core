@@ -22,7 +22,7 @@ pub type P2PPreConfirmationMessage =
 pub type P2PPreConfirmationGossipData = GossipData<P2PPreConfirmationMessage>;
 
 pub struct MyReturner<T> {
-    pub stream: Pin<Box<dyn Stream<Item= T> + Send + Sync + 'static>>
+    pub stream: Pin<Box<dyn Stream<Item= T> + Send + 'static>>
 }
 
 #[async_trait]
@@ -71,7 +71,7 @@ impl<S: ?Sized + AsyncReturner + Unpin> AsyncReturner for Box<S> {
 pub trait P2PSubscriptions: Send {
     type GossipedStatuses: NetworkData<P2PPreConfirmationMessage>;
 
-    fn gossiped_tx_statuses(&self) -> impl AsyncReturner<Item = Self::GossipedStatuses> + Send + Sync + 'static;
+    fn gossiped_tx_statuses(&self) -> impl AsyncReturner<Item = Self::GossipedStatuses> + Send + Unpin + 'static;
 
     /// Report the validity of a transaction received from the network.
     fn notify_gossip_transaction_validity(

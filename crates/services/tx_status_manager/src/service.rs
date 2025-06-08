@@ -563,8 +563,11 @@ use std::{
     struct MyStreamer<T> {
         pub stream: Pin<Box<dyn Stream<Item = T> + Send + 'static>>
     }
+    
     #[async_trait]
-    impl <T>AsyncReturner<T> for MyStreamer<T> {
+    impl <T>AsyncReturner for MyStreamer<T> {
+        type Item = T;
+
         async fn next(&mut self) -> Option<T> {
             self.stream.next().await
         }
@@ -575,7 +578,7 @@ use std::{
 
         fn gossiped_tx_statuses(
             &self,
-        ) -> impl  AsyncReturner<Self::GossipedStatuses> + 'static {
+        ) -> impl AsyncReturner<Item = Self::GossipedStatuses> + Send + Unpin + 'static {
             MyStreamer {stream: Box::pin(tokio_stream::empty())}
         }
 
@@ -722,7 +725,7 @@ use std::{
             tx_status_receiver,
         };
         let (sender, receiver) = mpsc::channel(1_000);
-        let new_tx_status = Box::pin(ReceiverStream::new(receiver));
+        let new_tx_status = Box::pin(MyStreamer {stream: Box::pin(ReceiverStream::new(receiver)) });
         let subscriptions = Subscriptions { new_tx_status };
         let tx_status_change = TxStatusChange::new(100, Duration::from_secs(360));
         let signing_key = SecretKey::default();
