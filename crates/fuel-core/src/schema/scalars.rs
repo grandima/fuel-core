@@ -162,22 +162,22 @@ impl CursorType for SortedTxCursor {
 }
 
 #[derive(Clone, Debug, derive_more::Into, derive_more::From, PartialEq, Eq)]
-pub struct HexString(pub(crate) Cow<'static, [u8]>);
+pub struct HexString<'a>(pub(crate) Cow<'a, [u8]>);
 
-impl From<Vec<u8>> for HexString {
+impl From<Vec<u8>> for HexString<'_> {
     fn from(vec: Vec<u8>) -> Self {
         HexString(Cow::Owned(vec))
     }
 }
 
-impl From<HexString> for Vec<u8> {
+impl From<HexString<'_>> for Vec<u8> {
     fn from(hex: HexString) -> Self {
         hex.0.into_owned()
     }
 }
 
 #[Scalar(name = "HexString")]
-impl ScalarType for HexString {
+impl ScalarType for HexString<'_> {
     fn parse(value: Value) -> InputValueResult<Self> {
         match &value {
             Value::String(value) => {
@@ -192,14 +192,14 @@ impl ScalarType for HexString {
     }
 }
 
-impl Display for HexString {
+impl Display for HexString<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let s = format!("0x{}", hex::encode(&self.0.as_ref()));
         s.fmt(f)
     }
 }
 
-impl CursorType for HexString {
+impl CursorType for HexString<'_> {
     type Error = String;
 
     fn decode_cursor(s: &str) -> Result<Self, Self::Error> {
@@ -211,7 +211,7 @@ impl CursorType for HexString {
     }
 }
 
-impl FromStr for HexString {
+impl FromStr for HexString<'_> {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -222,13 +222,13 @@ impl FromStr for HexString {
     }
 }
 
-impl From<fuel_types::Nonce> for HexString {
+impl From<fuel_types::Nonce> for HexString<'_> {
     fn from(n: fuel_types::Nonce) -> Self {
         HexString(Cow::Owned(n.to_vec()))
     }
 }
 
-impl TryInto<fuel_types::Nonce> for HexString {
+impl TryInto<fuel_types::Nonce> for HexString<'_> {
     type Error = TryFromSliceError;
 
     fn try_into(self) -> Result<fuel_types::Nonce, Self::Error> {

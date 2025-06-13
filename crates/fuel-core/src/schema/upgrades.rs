@@ -58,7 +58,7 @@ impl UpgradeQuery {
     #[graphql(complexity = "query_costs().storage_read + child_complexity")]
     async fn state_transition_bytecode_by_root(
         &self,
-        root: HexString,
+        root: HexString<'_>,
     ) -> async_graphql::Result<StateTransitionBytecode> {
         StateTransitionBytecode::try_from(root)
     }
@@ -93,7 +93,7 @@ impl From<fuel_types::Bytes32> for StateTransitionBytecode {
     }
 }
 
-impl TryFrom<HexString> for StateTransitionBytecode {
+impl TryFrom<HexString<'_>> for StateTransitionBytecode {
     type Error = async_graphql::Error;
 
     fn try_from(root: HexString) -> Result<Self, Self::Error> {
@@ -105,7 +105,7 @@ impl TryFrom<HexString> for StateTransitionBytecode {
 #[derive(SimpleObject)]
 pub struct UploadedBytecode {
     /// Combined bytecode of all uploaded subsections.
-    bytecode: HexString,
+    bytecode: HexString<'static>,
     /// Number of uploaded subsections (if incomplete).
     uploaded_subsections_number: Option<u16>,
     /// Indicates if the bytecode upload is complete.

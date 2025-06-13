@@ -1094,8 +1094,8 @@ impl DryRunStorageReads {
 #[derive(Clone)]
 pub struct StorageReadReplayEvent {
     column: U32,
-    key: HexString,
-    value: Option<HexString>,
+    key: HexString<'static>,
+    value: Option<HexString<'static>>,
 }
 
 impl From<fuel_core_types::services::executor::StorageReadReplayEvent>

@@ -31,8 +31,8 @@ pub struct InputCoin {
     tx_pointer: TxPointer,
     witness_index: u16,
     predicate_gas_used: U64,
-    predicate: HexString,
-    predicate_data: HexString,
+    predicate: HexString<'static>,
+    predicate_data: HexString<'static>,
 }
 
 #[Object]
@@ -112,9 +112,9 @@ pub struct InputMessage {
     nonce: Nonce,
     witness_index: u16,
     predicate_gas_used: U64,
-    data: HexString,
-    predicate: HexString,
-    predicate_data: HexString,
+    data: HexString<'static>,
+    predicate: HexString<'static>,
+    predicate_data: HexString<'static>,
 }
 
 #[Object]
