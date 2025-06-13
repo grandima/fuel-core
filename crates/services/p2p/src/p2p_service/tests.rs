@@ -805,6 +805,8 @@ async fn gossipsub_broadcast(
         p2p_config.max_functional_peers_connected = connection_limit;
     }
 
+    p2p_config.subscribe_to_new_tx = true;
+    
     p2p_config.subscribe_to_pre_confirmations = true;
 
     let (selected_topic, selected_tag): (Sha256Topic, GossipTopicTag) = {

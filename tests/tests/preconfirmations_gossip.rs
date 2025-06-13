@@ -63,6 +63,7 @@ use test_helpers::assemble_tx::{
 fn config_with_preconfirmations(block_production_period: Duration) -> Config {
     let mut config = Config::local_node();
 
+    config.p2p.as_mut().unwrap().subscribe_to_new_tx = true;
     config.p2p.as_mut().unwrap().subscribe_to_pre_confirmations = true;
     config.txpool.pending_pool_tx_ttl = Duration::from_secs(1);
     config

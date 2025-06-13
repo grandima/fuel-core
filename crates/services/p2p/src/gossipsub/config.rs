@@ -227,7 +227,13 @@ fn initialize_gossipsub(gossipsub: &mut gossipsub::Behaviour, p2p_config: &Confi
         .with_peer_score(peer_score_params, peer_score_thresholds)
         .expect("gossipsub initialized with peer score");
 
-    let mut topics = vec![(NEW_TX_GOSSIP_TOPIC, NEW_TX_GOSSIP_WEIGHT)];
+    let mut topics = vec![];
+    if p2p_config.subscribe_to_new_tx {
+        topics.push((
+            NEW_TX_GOSSIP_TOPIC, 
+            NEW_TX_GOSSIP_WEIGHT
+        ));
+    }
     if p2p_config.subscribe_to_pre_confirmations {
         topics.push((
             TX_PRECONFIRMATIONS_GOSSIP_TOPIC,
