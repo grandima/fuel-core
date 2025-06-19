@@ -67,7 +67,6 @@ impl<S: ?Sized + AsyncReturner + Unpin> AsyncReturner for Box<S> {
     }
 }
 
-
 pub trait P2PSubscriptions: Send {
     type GossipedStatuses: NetworkData<P2PPreConfirmationMessage>;
 
