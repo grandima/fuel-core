@@ -4126,7 +4126,6 @@ dependencies = [
  "fuel-core-services",
  "fuel-core-tx-status-manager",
  "fuel-core-types 0.45.1",
- "futures",
  "mockall",
  "parking_lot",
  "postcard",

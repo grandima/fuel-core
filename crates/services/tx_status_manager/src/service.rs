@@ -51,13 +51,14 @@ use fuel_core_types::{
     },
     tai64::Tai64,
 };
-use futures::StreamExt;
+// use futures::StreamExt;
 use std::collections::HashMap;
 use tokio::sync::{
     broadcast,
     mpsc,
     oneshot,
 };
+use crate::subscriptions::{GenericTxStatusSubscription, TxStatusSubscription};
 
 enum ReadRequest {
     GetStatus {
@@ -141,9 +142,9 @@ impl SharedData {
     }
 }
 
-pub struct Task<Pubkey, P2P> {
+pub struct Task<Pubkey, P2P, StatusSub> {
     manager: TxStatusManager,
-    subscriptions: Subscriptions,
+    subscriptions: StatusSub,
     read_requests_receiver: mpsc::Receiver<ReadRequest>,
     write_requests_receiver: mpsc::UnboundedReceiver<UpdateRequest>,
     shared_data: SharedData,
@@ -231,7 +232,7 @@ impl<Pubkey: ProtocolPublicKey> SignatureVerification<Pubkey> {
     }
 }
 
-impl<Pubkey: ProtocolPublicKey, P2P: P2PSubscriptions> Task<Pubkey, P2P> {
+impl<Pubkey: ProtocolPublicKey, P2P: P2PSubscriptions, StatusSub: GenericTxStatusSubscription<P2P::GossipedStatuses>> Task<Pubkey, P2P, StatusSub> {
     fn handle_preconfirmations(&mut self, preconfirmations: Vec<Preconfirmation>) {
         preconfirmations
             .into_iter()
@@ -318,10 +319,11 @@ impl<Pubkey: ProtocolPublicKey, P2P: P2PSubscriptions> Task<Pubkey, P2P> {
 }
 
 #[async_trait::async_trait]
-impl<Pubkey, P2P> RunnableService for Task<Pubkey, P2P>
+impl<Pubkey, P2P, StatusSub> RunnableService for Task<Pubkey, P2P, StatusSub>
 where
     Pubkey: ProtocolPublicKey,
     P2P: P2PSubscriptions,
+    StatusSub: GenericTxStatusSubscription<P2P::GossipedStatuses>
 {
     const NAME: &'static str = "TxStatusManagerTask";
     type SharedData = SharedData;
@@ -341,10 +343,11 @@ where
     }
 }
 
-impl<Pubkey, P2P> RunnableTask for Task<Pubkey, P2P>
+impl<Pubkey, P2P, StatusSub> RunnableTask for Task<Pubkey, P2P, StatusSub>
 where
     Pubkey: ProtocolPublicKey,
     P2P: P2PSubscriptions,
+    StatusSub: TxStatusSubscription
 {
     async fn run(&mut self, watcher: &mut StateWatcher) -> TaskNextAction {
         tokio::select! {
@@ -354,7 +357,7 @@ where
                 TaskNextAction::Stop
             }
 
-            tx_status_from_p2p = self.subscriptions.new_tx_status.next() => {
+            tx_status_from_p2p = self.subscriptions.next_tx_status() => {
                 if let Some(GossipData { data, message_id, peer_id }) = tx_status_from_p2p {
                     if let Some(msg) = data {
                         self.new_preconfirmations_from_p2p(msg, message_id, peer_id);
@@ -417,10 +420,10 @@ pub fn new_service<P2P, Pubkey>(
     p2p: P2P,
     config: Config,
     protocol_pubkey: Pubkey,
-) -> ServiceRunner<Task<Pubkey, P2P>>
+) -> ServiceRunner<Task<Pubkey, P2P, Subscriptions>>
 where
     P2P: P2PSubscriptions<GossipedStatuses = P2PPreConfirmationGossipData>,
-    Pubkey: ProtocolPublicKey,
+    Pubkey: ProtocolPublicKey
 {
     let tx_status_from_p2p_stream = p2p.gossiped_tx_statuses();
     let (tx_status_sender, tx_status_receiver) =
@@ -702,7 +705,7 @@ mod tests {
         }
     }
 
-    fn new_task_with_handles(ttl: Duration) -> (Task<PublicKey, MockP2P>, Handles) {
+    fn new_task_with_handles(ttl: Duration) -> (Task<PublicKey, MockP2P, Subscriptions>, Handles) {
         let (read_requests_sender, read_requests_receiver) = mpsc::channel(1);
         let (p2p_notify_validity_sender, p2p_notify_validity_receiver) =
             mpsc::channel(10000);
